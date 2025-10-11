@@ -4,7 +4,8 @@ import sys
 import os
 sys.path.append("C:/Users/BETOBETACO/Desktop/BETEX/DURSAN")
 from bbdd.BBDD_Connector import BBDD_Connector
-from api.prompts import sql_translator_prompt,offer_optimizer_prompt
+from api.prompts import sql_translator_prompt,offer_optimizer_prompt,template_response
+from api.modules.RecommendationParser import RecommendationParser
 import time
 
 load_dotenv()
@@ -41,4 +42,17 @@ offer_optimizer=offer_optimizer_prompt(chat_questions,user_answers,car_offers,li
 end_time=time.time()
 elapsed_time=end_time-start_time
 print(f"Elapsed time: {elapsed_time} seconds")
+
+response=template_response
+recommendation_parser=RecommendationParser()
+parsed_recommendations=recommendation_parser.parse(response)["recommendations"]
+
+
+recommendations = [
+    {**bbdd.search_by_id(recommendation['id'])[0], **{
+        "fit_reasoning": recommendation['fit_reasoning']
+    }}
+    for recommendation in parsed_recommendations
+]
+
 

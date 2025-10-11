@@ -14,3 +14,7 @@ class BBDD_Connector:
             rows = result.fetchall()
             columns = result.keys()
             return [dict(zip(columns, row)) for row in rows]
+        
+    def search_by_id(self, id: int):
+        query = f"SELECT * FROM CarAd WHERE id = {id};"
+        return self.execute_query(query)

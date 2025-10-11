@@ -1,22 +1,16 @@
-from fastapi import FastAPI, Request, HTTPException, Body
-import ollama
-from sqlmodel import Session, select
-from typing import Any, Dict, List, Optional
+from fastapi import FastAPI,HTTPException
 import os
 import sys
-from pydantic import BaseModel
-
-# Import CarAd model
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'scrap', 'src', 'models')))
-from CarAd import CarAd
-from sqlmodel import create_engine
+from loguru import logger
+from typing import List, Dict, Any
 from fastapi.middleware.cors import CORSMiddleware
+from bbdd.BBDD_Connector import BBDD_Connector
+from api.prompts import sql_translator_prompt, offer_optimizer_prompt
+from api.modules.utils import gemini_request
+from api.modules.RecommendationParser import RecommendationParser
 
-# Import the prompt template
-from prompts import carad_gpt_prompt
 
 app = FastAPI()
-
 origins = [
     "*"
 ]
@@ -29,49 +23,38 @@ app.add_middleware(
     allow_headers=["*"],  # allow Content-Type, Authorization, etc.
 )
 
-# Build absolute path to the db file in the bbdd folder
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-DB_PATH = os.path.join(BASE_DIR, "bbdd", "car_ads.db")
-DB_URL = f"sqlite:///{DB_PATH}"
-
-engine = create_engine(DB_URL, echo=True)
-
-@app.post("/carads")
-async def get_carads(filters: Optional[Dict[str, Any]] = Body(default={})):
-	with Session(engine) as session:
-		query = select(CarAd)
-		for key, value in filters.items():
-			query = query.where(getattr(CarAd, key) == value)
-		results: List[CarAd] = session.exec(query).all()
-		return results
-
-# Define request body model
-class ChatRequest(BaseModel):
-    messages: list[str]
-
-@app.post("/chat")
-async def chat(request: ChatRequest):
-	messages = request.messages
-	if not messages or not isinstance(messages, list):
-		raise HTTPException(status_code=400, detail="Field 'messages' (list) is required in the body")
-	# Here you would implement the logic to handle the chat messages
-	
-	return {"message": "Chat request received", "messages": messages}
 
 
-# Request model for GPT endpoint
-class GPTRequest(BaseModel):
-	message: str
-
-# Endpoint to call gpt-oss-20b model with Ollama
-@app.post("/gpt-carad")
-def gpt_carad():
-	prompt = carad_gpt_prompt()
+@app.post("/get_recommendations")
+def get_recommendations(chat_questions: List[str], user_answers: List[str]) -> Dict[str, Any]:
 	try:
-		response = ollama.generate(
-		model="openai/gpt-oss-20b",
-		prompt=prompt
-			)
-		return {"response": response["message"]["content"],"status_code":200}
+		bbdd=BBDD_Connector("bbdd/car_ads.db")
+		parser=RecommendationParser()
+		
+		sql_translator=sql_translator_prompt(chat_questions,user_answers)
+		logger.info("Translating user answers to SQL query...")
+		
+		query=gemini_request(sql_translator)
+		logger.info(f"Generated SQL Query: {query}")
+		
+		logger.info("Executing SQL query on the database...")
+		car_offers=bbdd.execute_query(query)
+		
+		offer_optimizer=offer_optimizer_prompt(chat_questions,user_answers,car_offers,limit_offers=30)
+		recommendation_response=gemini_request(offer_optimizer)
+		
+		logger.info("Parsing recommendations...")
+		parsed_recommendations=parser.parse(recommendation_response)["recommendations"]
+		
+		# Map the parsed recommendations to the original car offers
+		recommendations = [
+			{**bbdd.search_by_id(recommendation['id'])[0], **{
+				"fit_reasoning": recommendation['fit_reasoning']
+			}}
+			for recommendation in parsed_recommendations
+		]
+
+		
+		return {"recommendations": recommendations}
 	except Exception as e:
-		return {"error": str(e),"status_code":500}
+		raise HTTPException(status_code=500, detail=str(e))
