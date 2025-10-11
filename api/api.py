@@ -39,7 +39,9 @@ def get_recommendations(chat_questions: List[str], user_answers: List[str]) -> D
 		
 		logger.info("Executing SQL query on the database...")
 		car_offers=bbdd.execute_query(query)
+		logger.info(f"Retrieved {len(car_offers)} car offers from the database.")
 		
+		logger.info("Generating recommendations")
 		offer_optimizer=offer_optimizer_prompt(chat_questions,user_answers,car_offers,limit_offers=30)
 		recommendation_response=gemini_request(offer_optimizer)
 		

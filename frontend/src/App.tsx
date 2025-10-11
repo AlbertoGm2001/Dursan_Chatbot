@@ -9,19 +9,9 @@ import type { JSX } from "react/jsx-runtime" // Importa JSX para evitar errores 
 //Objetivo:
 //Mandar una petición a la api la cual envía como cuerpo un diccionario con los mensajes recibidos por el usuario
 
-
-// Define la estructura de un coche
-interface CarType {
-  id: string
-  make: string
-  model: string
-  year: number
-  price: number
-  mileage: number
-  fuelType: string
-  image: string
-  features: string[]
-  rating: number
+interface RecommendationRequest {
+  chat_questions: string[];
+  user_answers: string[];
 }
 
 // Define la estructura de un mensaje en el chat
@@ -33,44 +23,7 @@ interface Message {
 }
 
 // Lista de coches de ejemplo para mostrar recomendaciones
-const SAMPLE_CARS: CarType[] = [
-  {
-    id: "1",
-    make: "Toyota",
-    model: "Camry Hybrid",
-    year: 2021,
-    price: 28500,
-    mileage: 32000,
-    fuelType: "Híbrido",
-    image: "/silver-camry-hybrid.png",
-    features: ["Cámara Trasera", "Bluetooth", "Asistente de Carril", "Eficiente"],
-    rating: 4.8,
-  },
-  {
-    id: "2",
-    make: "BMW",
-    model: "3 Series",
-    year: 2020,
-    price: 35900,
-    mileage: 28000,
-    fuelType: "Gasolina",
-    image: "/black-bmw-3-series-sedan.png",
-    features: ["Asientos de Cuero", "Techo Solar", "Sonido Premium", "Navegación"],
-    rating: 4.7,
-  },
-  {
-    id: "3",
-    make: "Tesla",
-    model: "Model 3",
-    year: 2022,
-    price: 42000,
-    mileage: 15000,
-    fuelType: "Eléctrico",
-    image: "/placeholder-9ylxr.png",
-    features: ["Piloto Automático", "Supercarga", "Interior Premium", "Actualizaciones OTA"],
-    rating: 4.9,
-  },
-]
+
 
 // Preguntas que la IA hará al usuario para personalizar la recomendación
 const AI_QUESTIONS: string[] = [
@@ -128,7 +81,7 @@ export default function CarChatApp(): JSX.Element {
       }
       setMessages((prev) => [...prev, newMessage])
       callback()
-    }, 1500)
+    }, 150)
   }
 
   // Maneja el envío de mensajes del usuario
@@ -170,14 +123,17 @@ export default function CarChatApp(): JSX.Element {
 
   const sendMessagesToApi = ():void=>{
 
-    const messagesToSend = messages.filter(msg => msg.isUser).map(msg => msg.content)
-
-    fetch("http://localhost:8000/chat", {
+    const userMessages = messages.filter(msg => msg.isUser).map(msg => msg.content)
+    const recommendationRequest: RecommendationRequest = {
+      chat_questions: userMessages,
+      user_answers: userMessages
+    }
+    fetch("http://localhost:8000/get_recommendations", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ messages: messagesToSend })
+      body: JSON.stringify(recommendationRequest)
     })
     .then(response => response.json())
     .then(data => {
@@ -267,72 +223,7 @@ export default function CarChatApp(): JSX.Element {
               Opciones Perfectas para Ti
             </h2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {/* Muestra cada coche recomendado */}
-              {SAMPLE_CARS.map((car) => (
-                <div
-                  key={car.id}
-                  className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden hover:shadow-lg transition-shadow"
-                >
-                  <div className="aspect-video relative">
-                    <img
-                      src={car.image || "/placeholder.svg"}
-                      alt={`${car.make} ${car.model}`}
-                      className="w-full h-full object-cover"
-                    />
-                    <span className="absolute top-2 right-2 bg-blue-600 text-white px-2 py-1 rounded-md text-xs font-medium">
-                      {car.fuelType}
-                    </span>
-                  </div>
-                  <div className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-semibold text-lg text-gray-900">
-                          {car.year} {car.make} {car.model}
-                        </h3>
-                        <div className="flex items-center gap-1 mt-1">
-                          <Star className="w-4 h-4 fill-blue-600 text-blue-600" />
-                          <span className="text-sm text-gray-600">{car.rating}</span>
-                        </div>
-                      </div>
-                      {/* Botón para marcar como favorito */}
-                      <button className="p-2 text-gray-400 hover:text-red-500 transition-colors">
-                        <Heart className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    {/* Precio y kilometraje */}
-                    <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
-                      <div className="flex items-center gap-1">
-                        <span className="w-4 h-4">€</span>
-                        <span>{car.price.toLocaleString()}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="w-4 h-4">🚗</span>
-                        <span>{car.mileage.toLocaleString()} km</span>
-                      </div>
-                    </div>
-
-                    {/* Características principales */}
-                    <div className="flex flex-wrap gap-1 mb-4">
-                      {car.features.slice(0, 3).map((feature) => (
-                        <span key={feature} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
-                          {feature}
-                        </span>
-                      ))}
-                      {car.features.length > 3 && (
-                        <span className="border border-gray-300 text-gray-600 px-2 py-1 rounded text-xs">
-                          +{car.features.length - 3} más
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Botón para ver detalles del coche */}
-                    <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors">
-                      Ver Detalles
-                    </button>
-                  </div>
-                </div>
-              ))}
+            
             </div>
           </div>
         )}
