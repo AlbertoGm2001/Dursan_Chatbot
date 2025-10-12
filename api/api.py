@@ -28,7 +28,7 @@ app.add_middleware(
 @app.post("/get_recommendations")
 def get_recommendations(chat_questions: List[str], user_answers: List[str]) -> Dict[str, Any]:
 	try:
-		bbdd=BBDD_Connector("bbdd/car_ads.db")
+		bbdd=BBDD_Connector("bbdd/car_ads_pre.db")
 		parser=RecommendationParser()
 		
 		sql_translator=sql_translator_prompt(chat_questions,user_answers)
@@ -56,7 +56,7 @@ def get_recommendations(chat_questions: List[str], user_answers: List[str]) -> D
 			for recommendation in parsed_recommendations
 		]
 
-		logger.info("Recomendations generated:",recommendations)
+		logger.info("Recomendations generated")
 		return {"recommendations": recommendations}
 	except Exception as e:
 		logger.error(f"Error in /get_recommendations: {str(e)}")

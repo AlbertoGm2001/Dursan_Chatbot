@@ -20,6 +20,7 @@ class CarAd(SQLModel, table=True):
 	car_kms: int
 	automatic: bool
 	fuel_type: str
+	image_url: str
 def create_db():
 		engine = create_engine(bbdd_path, echo=True)
 		SQLModel.metadata.create_all(engine)

@@ -5,12 +5,22 @@ import time
 from modules.MainPageCrawler import MainPageCrawler
 from dotenv import load_dotenv  
 from src.models.CarAd import create_db, remove_db
+import glob
 
 
 load_dotenv()
 main_url = os.getenv("MAIN_URL")
 remove_db()
 create_db()
+
+#Se borran las imágenes de coches que se tenían
+image_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "frontend", "images", "car_images")
+image_files = glob.glob(os.path.join(image_folder, "*"))
+for image_file in image_files:
+    try:
+        os.remove(image_file)
+    except Exception as e:
+        print(f"Error deleting {image_file}: {e}")
 
 crawler=MainPageCrawler(main_url)
 html = crawler.get_html()
