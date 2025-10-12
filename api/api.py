@@ -56,7 +56,8 @@ def get_recommendations(chat_questions: List[str], user_answers: List[str]) -> D
 			for recommendation in parsed_recommendations
 		]
 
-		
+		logger.info("Recomendations generated:",recommendations)
 		return {"recommendations": recommendations}
 	except Exception as e:
+		logger.error(f"Error in /get_recommendations: {str(e)}")
 		raise HTTPException(status_code=500, detail=str(e))

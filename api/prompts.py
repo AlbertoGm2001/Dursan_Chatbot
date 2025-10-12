@@ -81,7 +81,7 @@ You will receive the following data:
 1. Extract the users preferences from the conversation (budget, brand, fuel type, etc.).
 2. Compare each car offer against those preferences.
 3. Rank all offers based on how well they match the users needs.
-4. Return the top 3 offers in JSON format, including a reasoning summary and an estimated match score.
+4. Return the top 3 offers in JSON format, including a reasoning summary and an estimated match score. Reasoning summary must be in Spanish!!!
 
 ---
 
