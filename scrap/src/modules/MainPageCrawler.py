@@ -45,7 +45,17 @@ class MainPageCrawler():
         for ad in ads_list:
             
             try: 
+                car_image= ad.find('div', class_='vehicle-card__slider')
+                if car_image:
+                     img_tag=car_image.find('img')
+                     image_url=img_tag['src'] if img_tag and 'src' in img_tag.attrs else None
+                     image_content=requests.get(image_url).content
+                     with open(f'frontend/images/car_images/{image_url.split("/")[-1]}', 'wb') as handler:
+                         handler.write(image_content)
+
+                car_image_url=image_url.split("/")[-1]
                 car_content = ad.find('div', class_='vehicle-card__content')
+                
                 if car_content is None:
                     continue
                 ad_title = car_content.find('a', class_='vehicle-card__title')
@@ -77,7 +87,8 @@ class MainPageCrawler():
                 car_year=ad_year,
                 car_kms=ad_kms,
                 automatic=ad_automatic,
-                fuel_type=ad_fuel_type
+                fuel_type=ad_fuel_type,
+                image_url=car_image_url
                 )
 
                 car_ads_list.append(car_ad)

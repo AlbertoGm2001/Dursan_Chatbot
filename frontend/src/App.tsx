@@ -19,6 +19,7 @@ interface CarRecommendation {
   automatic: boolean | number;
   fuel_type: string;
   fit_reasoning: string;
+  image_url: string;
 }
 
 
@@ -69,7 +70,7 @@ export default function CarChatApp(): JSX.Element {
     <header className="header">
       <div className="header-inner">
         <div className="header-logo">
-          <img src="/images/dursan_logo.jpeg" alt="Dursan Logo" />
+          <img src="/images/logo/dursan_logo.jpeg" alt="Dursan Logo" />
         </div>
         <h1 className="header-title">DURSAN AI</h1>
       </div>
@@ -252,6 +253,11 @@ export default function CarChatApp(): JSX.Element {
             <div className="recommendations-grid">
               {recommendations.map((rec) => (
                 <div key={rec.id} className="car-card">
+                  {rec.image_url && (
+                    <div className="car-image">
+                      <img src={`images/car_images/${rec.image_url}`} alt={`${rec.car_brand} ${rec.car_model}`} />
+                    </div>
+                  )}
                   <a href={rec.url} target="_blank" rel="noopener noreferrer">
                     Ver en Dursan
                   </a>

@@ -28,6 +28,16 @@ fuel_type: str(Options are 'Gasolina', 'Diésel', 'Eléctrico', 'Híbrido')
 You will mainly need to filter by the variables offer_price or monthly offer price(depending on what the user asks for), car_year, car_kms, automatic and fuel_type, so you can ignore the rest of the variables.
 
 IMPORTANT: If you cannot extract any useful information from the conversation, you will return a query that retrieves all the information from the database, which is "SELECT * FROM CarAd;"
+VERY IMPORTANT:
+You have to understand that your response will be sent to a SQLite database, so you have to use the correct syntax for SQLite.
+
+Correct Syntax examples:
+SELECT * FROM CarAd WHERE car_brand = 'Audi';
+
+Incorrect Syntax examples:
+```sql
+SELECT * FROM CarAd WHERE car_brand = 'Audi';
+```
 
 
 User and chatbot conversation:
@@ -39,6 +49,10 @@ User and chatbot conversation:
 
 
 def offer_optimizer_prompt(chat_questions: list, user_answers: list, car_offers: list, limit_offers: int=None) -> str:
+    
+    #Image_url is not included in the prompt to reduce token usage
+    fields_to_include_in_prompt=['id', 'url', 'car_brand', 'car_model', 'description', 'offer_price', 'monthly_offer_price', 'car_year', 'car_kms', 'automatic', 'fuel_type']
+    car_offers=[{key: offer[key] for key in fields_to_include_in_prompt} for offer in car_offers]
     
     if limit_offers:
         car_offers = car_offers[:limit_offers]
