@@ -18,3 +18,7 @@ class BBDD_Connector:
     def search_by_id(self, id: int):
         query = f"SELECT * FROM CarAd WHERE id = {id};"
         return self.execute_query(query)
+    def get_available_brands(self):
+        query = "SELECT DISTINCT car_brand FROM CarAd;"
+        results = self.execute_query(query)
+        return [row['car_brand'] for row in results if row['car_brand'] is not None]
