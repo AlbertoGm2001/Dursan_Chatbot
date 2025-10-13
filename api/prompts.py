@@ -1,8 +1,13 @@
 # prompts.py
 import json
 
-def sql_translator_prompt(chat_questions: list,user_answers: list) -> str:
-    prompt="""
+def sql_translator_prompt(chat_questions: list,
+                          user_answers: list,
+                          available_brands: list) -> str:
+    
+    available_brands_str="\n".join([f"'{brand}'" for brand in available_brands])
+    
+    prompt=f"""
 
 Your main task is going to be to transform natural language into a simple SQL query that is used in a SQLite database, task for which you are an expert.
 You will be provided with a database schema, and you will have to use it to create the SQL query.
@@ -24,6 +29,11 @@ car_year: int
 car_kms: int
 automatic: bool(Options are 0,1)
 fuel_type: str(Options are 'Gasolina', 'Diésel', 'Eléctrico', 'Híbrido')
+
+The options for the car_brand variable are the following:
+{available_brands_str}
+If the user gives hints about a brand that is not in the list, you will ignore that information and not include it in the SQL query.
+If the user gives a hint that prefers any of the brands in the list, then try to filter by that brand in the resulting query.
 
 You will mainly need to filter by the variables offer_price or monthly offer price(depending on what the user asks for), car_year, car_kms, automatic and fuel_type, so you can ignore the rest of the variables.
 
@@ -48,7 +58,11 @@ User and chatbot conversation:
     return prompt
 
 
-def offer_optimizer_prompt(chat_questions: list, user_answers: list, car_offers: list, limit_offers: int=None) -> str:
+def offer_optimizer_prompt(chat_questions: list, 
+                           user_answers: list,
+                           car_offers: list,
+                           limit_offers: int=None,
+                           ) -> str:
     
     #Image_url is not included in the prompt to reduce token usage
     fields_to_include_in_prompt=['id', 'url', 'car_brand', 'car_model', 'description', 'offer_price', 'monthly_offer_price', 'car_year', 'car_kms', 'automatic', 'fuel_type']
@@ -57,6 +71,8 @@ def offer_optimizer_prompt(chat_questions: list, user_answers: list, car_offers:
     if limit_offers:
         car_offers = car_offers[:limit_offers]
     car_offers=json.dumps(car_offers, indent=4, ensure_ascii=False)
+
+   
     prompt=f"""
 You are an expert car sales assistant and data analyst.
 
