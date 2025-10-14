@@ -40,9 +40,12 @@ def get_recommendations(chat_questions: List[str], user_answers: List[str]) -> D
 		logger.info("Executing SQL query on the database...")
 		car_offers=bbdd.execute_query(query)
 		logger.info(f"Retrieved {len(car_offers)} car offers from the database.")
-		
+		#SE ordena para mostrar al prompt los coches de mayor valor, ya que se asume que si el cliente no fija límites de presupuesto, es porque busca el mejor coche posible
+		car_offers=sorted(car_offers,key=lambda x:x["offer_price"],reverse=True)
+
+
 		logger.info("Generating recommendations")
-		offer_optimizer=offer_optimizer_prompt(chat_questions,user_answers,car_offers,limit_offers=30)
+		offer_optimizer=offer_optimizer_prompt(chat_questions,user_answers,car_offers,limit_offers=80)
 		recommendation_response=gemini_request(offer_optimizer)
 		
 		logger.info("Parsing recommendations...")
