@@ -80,6 +80,12 @@ export default function CarChatApp(): JSX.Element {
   const [currentInput, setCurrentInput] = useState<string>("")
   // Estado para saber en qué pregunta va la IA
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0)
+  // Estado para el slider del presupuesto
+  const [budgetValue, setBudgetValue] = useState<number>(25000)
+  // Estado para el tipo de pago (una vez o mensual)
+  const [paymentType, setPaymentType] = useState<'once' | 'monthly'>('once')
+  // Estado para el valor mensual
+  const [monthlyValue, setMonthlyValue] = useState<number>(300)
   // Estado para mostrar las recomendaciones de coches
   const [showRecommendations, setShowRecommendations] = useState<boolean>(false)
   // Estado para almacenar las recomendaciones
@@ -119,11 +125,30 @@ export default function CarChatApp(): JSX.Element {
 
   // Maneja el envío de mensajes del usuario
   const handleSendMessage = (): void => {
-    if (!currentInput.trim()) return
+    let messageContent = currentInput.trim()
+    
+    // Si es la pregunta del presupuesto, usar el valor del slider
+    if (currentQuestionIndex === 2) {
+      if (paymentType === 'once') {
+        if (budgetValue >= 100000) {
+          messageContent = `No me importa pagar más de 100.000 euros`
+        } else {
+          messageContent = `Mi presupuesto máximo es de ${budgetValue.toLocaleString()} € (pago único)`
+        }
+      } else {
+        if (monthlyValue >= 1000) {
+          messageContent = `No me importa pagar más de 1.000 €/mes`
+        } else {
+          messageContent = `Prefiero pagar máximo ${monthlyValue.toLocaleString()} €/mes`
+        }
+      }
+    }
+    
+    if (!messageContent) return
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      content: currentInput,
+      content: messageContent,
       isUser: true,
       timestamp: new Date(),
     }
@@ -281,23 +306,113 @@ export default function CarChatApp(): JSX.Element {
         {/* Input Area: Zona de entrada de texto para el usuario */}
         {!showRecommendations && (
           <div className="input-area">
-            <div className="input-row">
-              <input
-                type="text"
-                value={currentInput}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Escribe tu respuesta..."
-                disabled={isTyping}
-              />
-              {/* Botón para enviar mensaje */}
-              <button
-                onClick={handleSendMessage}
-                disabled={!currentInput.trim() || isTyping}
-              >
-                <Send style={{ width: 20, height: 20 }} />
-              </button>
-            </div>
+            {currentQuestionIndex === 2 ? (
+              // Slider para la pregunta del presupuesto
+              <div className="budget-slider-container">
+                {/* Selección de tipo de pago */}
+                <div className="payment-type-selector">
+                  <div className="payment-type-label">¿Cómo prefieres pagar?</div>
+                  <div className="payment-type-buttons">
+                    <button
+                      type="button"
+                      className={`payment-type-btn ${paymentType === 'once' ? 'active' : ''}`}
+                      onClick={() => setPaymentType('once')}
+                      disabled={isTyping}
+                    >
+                      Pago único
+                    </button>
+                    <button
+                      type="button"
+                      className={`payment-type-btn ${paymentType === 'monthly' ? 'active' : ''}`}
+                      onClick={() => setPaymentType('monthly')}
+                      disabled={isTyping}
+                    >
+                      Cuota mensual
+                    </button>
+                  </div>
+                </div>
+
+                {/* Display del valor seleccionado */}
+                <div className="budget-display">
+                  <span className="budget-label">
+                    {paymentType === 'once' ? 'Presupuesto máximo:' : 'Cuota mensual máxima:'}
+                  </span>
+                  <span className="budget-value">
+                    {paymentType === 'once' 
+                      ? (budgetValue >= 100000 ? '>100.000 €' : `${budgetValue.toLocaleString()} €`)
+                      : (monthlyValue >= 1000 ? '>1.000 €/mes' : `${monthlyValue.toLocaleString()} €/mes`)
+                    }
+                  </span>
+                </div>
+
+                {/* Slider condicional */}
+                <div className="slider-wrapper">
+                  {paymentType === 'once' ? (
+                    <>
+                      <input
+                        type="range"
+                        min="5000"
+                        max="100000"
+                        step="1000"
+                        value={budgetValue}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBudgetValue(Number(e.target.value))}
+                        className="budget-slider"
+                        disabled={isTyping}
+                      />
+                      <div className="slider-labels">
+                        <span>5.000 €</span>
+                        <span>100.000 €</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <input
+                        type="range"
+                        min="80"
+                        max="1000"
+                        step="20"
+                        value={monthlyValue}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMonthlyValue(Number(e.target.value))}
+                        className="budget-slider"
+                        disabled={isTyping}
+                      />
+                      <div className="slider-labels">
+                        <span>80 €/mes</span>
+                        <span>1.000 €/mes</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <button
+                  onClick={handleSendMessage}
+                  disabled={isTyping}
+                  className="budget-submit-btn"
+                >
+                  <Send style={{ width: 20, height: 20 }} />
+                  Confirmar presupuesto
+                </button>
+              </div>
+            ) : (
+              // Input de texto normal para otras preguntas
+              <div className="input-row">
+                <input
+                  type="text"
+                  value={currentInput}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Escribe tu respuesta..."
+                  disabled={isTyping}
+                />
+                {/* Botón para enviar mensaje */}
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!currentInput.trim() || isTyping}
+                >
+                  <Send style={{ width: 20, height: 20 }} />
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
