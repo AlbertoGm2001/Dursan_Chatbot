@@ -23,15 +23,15 @@ app.add_middleware(
     allow_headers=["*"],  # allow Content-Type, Authorization, etc.
 )
 
-
+bbdd=BBDD_Connector("bbdd/car_ads_pre.db")
+parser=RecommendationParser()
 
 @app.post("/get_recommendations")
 def get_recommendations(chat_questions: List[str], user_answers: List[str]) -> Dict[str, Any]:
 	try:
-		bbdd=BBDD_Connector("bbdd/car_ads_pre.db")
-		parser=RecommendationParser()
+		available_brands=bbdd.get_available_brands()		
 		
-		sql_translator=sql_translator_prompt(chat_questions,user_answers)
+		sql_translator=sql_translator_prompt(chat_questions,user_answers,available_brands)
 		logger.info("Translating user answers to SQL query...")
 		
 		query=gemini_request(sql_translator)
