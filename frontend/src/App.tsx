@@ -44,12 +44,13 @@ interface Message {
 
 // Preguntas que la IA hará al usuario para personalizar la recomendación
 const AI_QUESTIONS: string[] = [
-  "¡Hola! Estoy aquí para ayudarte a encontrar el coche perfecto. ¿Cuál es tu nombre?",
-  "¡Encantado de conocerte! ¿Tienes alguna marca de coche favorita?",
-  "¿Cuál es tu rango de presupuesto para esta compra?",
-  "¿Te interesan los vehículos eléctricos o híbridos?",
-  "¿Para qué usarás principalmente este coche? (Desplazamientos diarios, viajes familiares, etc.)",
-  "¿Hay alguna característica específica que sea importante para ti?",
+  "¡Hola! Antes de empezar a buscar el coche perfecto para ti, me gustaría saber: ¿cuál es tu presupuesto máximo para esta compra?",
+  "Perfecto, pues empezamos con las preguntas: ¿Tienes alguna marca de coche favorita?",
+  "¿Para qué tipo de trayectos sueles usar el coche?(Viajes largos, trayectos por ciudad, un poco de todo...)?",
+  "¿Te gustaría que fuera automático o te da igual?",
+  "¿Sueles viajar solo o acompañado?",
+  "¿Qué opinas acerca de los coches eléctricos o híbridos?",
+  "Para finalizar, ¿Hay alguna característica específica que sea importante para ti?",
   "¡Perfecto! Déjame encontrar las mejores opciones para ti...",
 ]
 
@@ -128,7 +129,7 @@ export default function CarChatApp(): JSX.Element {
     let messageContent = currentInput.trim()
     
     // Si es la pregunta del presupuesto, usar el valor del slider
-    if (currentQuestionIndex === 2) {
+    if (currentQuestionIndex === 0) {
       if (paymentType === 'once') {
         if (budgetValue >= 100000) {
           messageContent = `No me importa pagar más de 100.000 euros`
@@ -306,7 +307,7 @@ export default function CarChatApp(): JSX.Element {
         {/* Input Area: Zona de entrada de texto para el usuario */}
         {!showRecommendations && (
           <div className="input-area">
-            {currentQuestionIndex === 2 ? (
+            {currentQuestionIndex === 0 ? (
               // Slider para la pregunta del presupuesto
               <div className="budget-slider-container">
                 {/* Selección de tipo de pago */}
