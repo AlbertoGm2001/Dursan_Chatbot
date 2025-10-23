@@ -2,7 +2,7 @@
 "use client"
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
-import { Send, Heart, Star } from "lucide-react"
+import { Send, Star } from "lucide-react"
 import "./App.css"
 import type { JSX } from "react/jsx-runtime"
 
@@ -66,17 +66,7 @@ export default function CarChatApp(): JSX.Element {
     },
   ])
   
-  // Add header with logo and title
-  const renderHeader = () => (
-    <header className="header">
-      <div className="header-inner">
-        <div className="header-logo">
-          <img src="/images/logo/dursan_logo.jpeg" alt="Dursan Logo" />
-        </div>
-        <h1 className="header-title">DURSAN AI</h1>
-      </div>
-    </header>
-  )
+
   // Estado para el input actual del usuario
   const [currentInput, setCurrentInput] = useState<string>("")
   // Estado para saber en qué pregunta va la IA
@@ -97,6 +87,8 @@ export default function CarChatApp(): JSX.Element {
   const [isSearchingRecommendations, setIsSearchingRecommendations] = useState<boolean>(false)
   // Estado para manejar errores de la API
   const [apiError, setApiError] = useState<string | null>(null)
+  // Estado para distinguir si es un error 404 (no hay resultados) o un error real
+  const [is404Error, setIs404Error] = useState<boolean>(false)
   // Referencia para hacer scroll automático al final del chat
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -190,6 +182,7 @@ export default function CarChatApp(): JSX.Element {
     }
     setIsSearchingRecommendations(true)
     setApiError(null) // Clear any previous errors
+    setIs404Error(false) // Clear previous 404 flag
     fetch("http://localhost:8000/get_recommendations", {
       method: "POST",
       headers: {
@@ -202,30 +195,41 @@ export default function CarChatApp(): JSX.Element {
         return response.json()
       }
       else if (response.status === 404) {
-        // Try to get the error message from the API response
+        // Mark as 404 error and try to get the error message from the API response
         return response.json().then(errorData => {
-          throw new Error(errorData.message || "No hemos conseguido encontrar ninguna oferta que se ajuste a tus necesidades.")
+          const error = new Error(errorData.message || "No hemos conseguido encontrar ninguna oferta que se ajuste a tus necesidades.")
+          error.name = "404Error"
+          throw error
         }).catch(() => {
-          throw new Error("No hemos conseguido encontrar ninguna oferta que se ajuste a tus necesidades.")
+          const error = new Error("No hemos conseguido encontrar ninguna oferta que se ajuste a tus necesidades.")
+          error.name = "404Error"
+          throw error
         })
       }
-      console.log(response)
       throw new Error("Error interno del servidor. Inténtelo de nuevo más tarde.")
     })
     .then(data => {
       setRecommendations(data.recommendations || [])
       setIsSearchingRecommendations(false)
       setApiError(null) // Clear error on success
+      setIs404Error(false) // Clear 404 flag on success
     })
     .catch(error => {
 
       console.error("Error al enviar mensajes a la API:", error)
       setIsSearchingRecommendations(false)
-      if (error.message.includes("Failed to fetch") || error.message.includes("NetworkError")) {
-          setApiError("No se pudo conectar con el servidor. Verifica tu conexión o inténtalo más tarde.")
-        } else {
-          setApiError(error.message || "Ha ocurrido un error inesperado.")
-        }
+      
+      // Check if it's a 404 error
+      if (error.name === "404Error") {
+        setIs404Error(true)
+        setApiError(error.message)
+      } else if (error.message.includes("Failed to fetch") || error.message.includes("NetworkError")) {
+        setIs404Error(false)
+        setApiError("No se pudo conectar con el servidor. Verifica tu conexión o inténtalo más tarde.")
+      } else {
+        setIs404Error(false)
+        setApiError(error.message || "Ha ocurrido un error inesperado.")
+      }
     })
   }
 
@@ -300,13 +304,17 @@ export default function CarChatApp(): JSX.Element {
           </div>
         )}
         {showRecommendations && !isSearchingRecommendations && apiError && (
-          <div className="error-container">
-            <div className="error-icon">⚠️</div>
-            <h3 className="error-title">Ups, algo ha salido mal</h3>
-            <p className="error-message">{apiError}</p>
-            <div className="error-actions">
-              <button className="error-retry-btn" onClick={refreshPage}>
-                Intentar de nuevo
+          <div className={is404Error ? "no-results-container" : "error-container"}>
+            <div className={is404Error ? "no-results-icon" : "error-icon"}>
+              {is404Error ? "🔍" : "⚠️"}
+            </div>
+            <h3 className={is404Error ? "no-results-title" : "error-title"}>
+              {is404Error ? "No hemos encontrado ofertas para ti" : "Ups, algo ha salido mal"}
+            </h3>
+            <p className={is404Error ? "no-results-message" : "error-message"}>{apiError}</p>
+            <div className={is404Error ? "no-results-actions" : "error-actions"}>
+              <button className={is404Error ? "no-results-retry-btn" : "error-retry-btn"} onClick={refreshPage}>
+                {is404Error ? "Empezar de nuevo" : "Intentar de nuevo"}
               </button>
             </div>
           </div>

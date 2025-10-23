@@ -50,6 +50,8 @@ async def get_recommendations(chat_questions: List[str], user_answers: List[str]
 			if len(car_offers)==0:
 				raise HTTPException(status_code=404, detail="No car offers found matching the criteria")
 		
+		except HTTPException as he:
+			raise he
 		except Exception as e:
 			logger.error(f"Error executing SQL query: {str(e)}")
 			n_sql_tries+=1
@@ -84,5 +86,6 @@ async def get_recommendations(chat_questions: List[str], user_answers: List[str]
 			n_recommendation_tries+=1
 			if n_recommendation_tries>=N_AI_TRIES:
 				raise HTTPException(status_code=500, detail="Error generating recommendations")
+			
 	logger.info("Recomendations generated")
 	return {"recommendations": recommendations}
