@@ -95,6 +95,8 @@ export default function CarChatApp(): JSX.Element {
   const [isTyping, setIsTyping] = useState<boolean>(false)
   // Estado para mostrar animación de búsqueda de recomendaciones
   const [isSearchingRecommendations, setIsSearchingRecommendations] = useState<boolean>(false)
+  // Estado para manejar errores de la API
+  const [apiError, setApiError] = useState<string | null>(null)
   // Referencia para hacer scroll automático al final del chat
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -187,6 +189,7 @@ export default function CarChatApp(): JSX.Element {
       user_answers: userMessages
     }
     setIsSearchingRecommendations(true)
+    setApiError(null) // Clear any previous errors
     fetch("http://localhost:8000/get_recommendations", {
       method: "POST",
       headers: {
@@ -194,15 +197,41 @@ export default function CarChatApp(): JSX.Element {
       },
       body: JSON.stringify(recommendationRequest)
     })
-    .then(response => response.json())
+    .then(response => {
+      if (response.ok) {
+        return response.json()
+      }
+      else if (response.status === 404) {
+        // Try to get the error message from the API response
+        return response.json().then(errorData => {
+          throw new Error(errorData.message || "No hemos conseguido encontrar ninguna oferta que se ajuste a tus necesidades.")
+        }).catch(() => {
+          throw new Error("No hemos conseguido encontrar ninguna oferta que se ajuste a tus necesidades.")
+        })
+      }
+      console.log(response)
+      throw new Error("Error interno del servidor. Inténtelo de nuevo más tarde.")
+    })
     .then(data => {
       setRecommendations(data.recommendations || [])
       setIsSearchingRecommendations(false)
+      setApiError(null) // Clear error on success
     })
     .catch(error => {
+
       console.error("Error al enviar mensajes a la API:", error)
       setIsSearchingRecommendations(false)
+      if (error.message.includes("Failed to fetch") || error.message.includes("NetworkError")) {
+          setApiError("No se pudo conectar con el servidor. Verifica tu conexión o inténtalo más tarde.")
+        } else {
+          setApiError(error.message || "Ha ocurrido un error inesperado.")
+        }
     })
+  }
+
+  // Function to refresh the page
+  const refreshPage = ():void => {
+    window.location.reload()
   }
 
   // Llama a la función para enviar mensajes a la API solo cuando showRecommendations es true
@@ -270,7 +299,19 @@ export default function CarChatApp(): JSX.Element {
             </p>
           </div>
         )}
-        {showRecommendations && !isSearchingRecommendations && (
+        {showRecommendations && !isSearchingRecommendations && apiError && (
+          <div className="error-container">
+            <div className="error-icon">⚠️</div>
+            <h3 className="error-title">Ups, algo ha salido mal</h3>
+            <p className="error-message">{apiError}</p>
+            <div className="error-actions">
+              <button className="error-retry-btn" onClick={refreshPage}>
+                Intentar de nuevo
+              </button>
+            </div>
+          </div>
+        )}
+        {showRecommendations && !isSearchingRecommendations && !apiError && (
           <div style={{ marginBottom: 32 }}>
             <div className="recommendations-title">
               <Star style={{ width: 28, height: 28, color: '#2563eb' }} />
