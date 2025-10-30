@@ -29,11 +29,14 @@ page_url_list=crawler.get_all_urls(html)
 car_ads_list=[]
 start_time = time.time()
 
-for i,page in enumerate(page_url_list):
+max_pages_to_crawl = 1000
+
+for i,page in enumerate(page_url_list[:max_pages_to_crawl]):
     try:
         print(f'Extrayendo página {str(page)}',)
         html = crawler.get_html(page)
         car_ads_list.extend(crawler.get_page_ads(html))
+
     except Exception as e:
         print(f'Error en la página {i+1}:',e)
 

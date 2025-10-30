@@ -14,14 +14,25 @@ import math
 
 load_dotenv()
 main_url=os.getenv('MAIN_URL')
-bbdd_path=os.getenv('BBDD_PATH')
+# Database configuration
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT")
+DB_NAME = os.getenv("DB_NAME")
+
+DB_URI=f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+
+
 def clean_text(text:str):
            return text.strip().replace('km','').replace('\n','').replace('.','').replace('\xa0','').replace('€','')
+
 class MainPageCrawler():
 
     def __init__(self,
-                  url: str,
-                  db: str =bbdd_path):
+                    url: str,
+                    db: str = DB_URI
+                ):
         self.url = url
         self.db = db
         

@@ -27,7 +27,7 @@ offer_price: float
 monthly_offer_price: int
 car_year: int
 car_kms: int
-automatic: bool(Options are 0,1)
+automatic: bool(Options are true, false)
 fuel_type: str(Options are 'Gasolina', 'Diésel', 'Eléctrico', 'Híbrido')
 
 The options for the car_brand variable are the following:

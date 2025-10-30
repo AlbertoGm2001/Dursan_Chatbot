@@ -5,7 +5,7 @@ class BBDD_Connector:
         self.db_name = db_name
     
     def create_engine(self):
-        return create_engine(f"sqlite:///{self.db_name}")
+        return create_engine(self.db_name)
 
     def execute_query(self, query: str):
         engine = self.create_engine()

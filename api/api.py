@@ -8,7 +8,15 @@ from bbdd.BBDD_Connector import BBDD_Connector
 from api.prompts import sql_translator_prompt, offer_optimizer_prompt
 from api.modules.utils import gemini_request
 from api.modules.RecommendationParser import RecommendationParser
+from dotenv import load_dotenv
 
+load_dotenv()
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT")
+DB_NAME = os.getenv("DB_NAME")
+DB_URI=f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 
 app = FastAPI()
 origins = [
@@ -23,7 +31,9 @@ app.add_middleware(
     allow_headers=["*"],  # allow Content-Type, Authorization, etc.
 )
 
-bbdd=BBDD_Connector("bbdd/car_ads_pre.db")
+
+
+bbdd=BBDD_Connector(DB_URI)
 parser=RecommendationParser()
 
 @app.post("/get_recommendations")
