@@ -10,6 +10,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 from src.models.CarAd import CarAd
 import re
 import math
+import boto3
 
 
 load_dotenv()
@@ -21,6 +22,13 @@ DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
 DB_NAME = os.getenv("DB_NAME")
 
+# AWS_ACCESS_KEY_ID=os.getenv("AWS_ACCESS_KEY_ID")
+# AWS_SECRET_ACCESS_KEY=os.getenv("AWS_SECRET_ACCESS_KEY")
+# AWS_DEFAULT_REGION=os.getenv("AWS_DEFAULT_REGION")
+
+
+s3_bucket_name='dursan-chatbot'
+s3_folder_name='scrap-images'
 DB_URI=f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 
 
@@ -31,11 +39,14 @@ class MainPageCrawler():
 
     def __init__(self,
                     url: str,
-                    db: str = DB_URI
+                    db: str = DB_URI,
+                    s3_client = boto3.client('s3')
                 ):
         self.url = url
         self.db = db
-        
+        self.s3_client = s3_client
+        self.s3_bucket_name = s3_bucket_name
+        self.s3_folder_name = s3_folder_name
 
     def get_html(self,
                  url:str=main_url):
@@ -62,8 +73,9 @@ class MainPageCrawler():
                      image_url=img_tag['src'] if img_tag and 'src' in img_tag.attrs else None
                      image_content=requests.get(image_url).content
                      with open(f'frontend/images/car_images/{image_url.split("/")[-1]}', 'wb') as handler:
-                         handler.write(image_content)
-
+                        handler.write(image_content)
+                     self.s3_client.upload_file(f'frontend/images/car_images/{image_url.split("/")[-1]}', s3_bucket_name, f'{s3_folder_name}/{image_url.split("/")[-1]}')
+                
                 car_image_url=image_url.split("/")[-1]
                 car_content = ad.find('div', class_='vehicle-card__content')
                 

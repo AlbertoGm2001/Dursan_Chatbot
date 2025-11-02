@@ -29,7 +29,7 @@ page_url_list=crawler.get_all_urls(html)
 car_ads_list=[]
 start_time = time.time()
 
-max_pages_to_crawl = 1000
+max_pages_to_crawl = 5
 
 for i,page in enumerate(page_url_list[:max_pages_to_crawl]):
     try:

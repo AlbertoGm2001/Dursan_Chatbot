@@ -9,7 +9,7 @@ def sql_translator_prompt(chat_questions: list,
     
     prompt=f"""
 
-Your main task is going to be to transform natural language into a simple SQL query that is used in a SQLite database, task for which you are an expert.
+Your main task is going to be to transform natural language into a simple SQL query that is used in a PostgreSQL database, task for which you are an expert.
 You will be provided with a database schema, and you will have to use it to create the SQL query.
 You will also be provided with a conversation between a chatbot and a user which will contain the information needed to create the SQL query.
 
@@ -43,7 +43,7 @@ OBSERVATIONS:
 #Try not to include two offers of the same car model in the results, unless there are not enough offers that meet the users needs.
 #IMPORTANT: If you cannot extract any useful information from the conversation, you will return a query that retrieves all the information from the database, which is "SELECT * FROM CarAd;"
 #VERY IMPORTANT:
-You have to understand that your response will be sent to a SQLite database, so you have to use the correct syntax for SQLite.
+You have to understand that your response will be sent to a PostgreSQL database, so you have to use the correct syntax for PostgreSQL.
 Correct Syntax examples:
 SELECT * FROM CarAd WHERE car_brand = 'Audi';
 
