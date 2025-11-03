@@ -1,5 +1,6 @@
 # prompts.py
 import json
+from loguru import logger
 
 def sql_translator_prompt(chat_questions: list,
                           user_answers: list,
@@ -55,6 +56,7 @@ SELECT * FROM CarAd WHERE car_brand = 'Audi';
 
 User and chatbot conversation:
 """
+    logger.info(f"Generating prompt from conversation...")
     for i in range(len(chat_questions)):
         prompt += f"Chatbot: {chat_questions[i]}\nUser: {user_answers[i]}\n"
     
