@@ -53,8 +53,8 @@ const AI_QUESTIONS: string[] = [
   "Para finalizar, ¿Hay alguna característica específica que sea importante para ti?",
   "¡Perfecto! Déjame encontrar las mejores opciones para ti...",
 ]
-
-
+const API_ENV = 'SERVER'
+const API_URL = API_ENV === 'LOCAL' ? 'http://localhost:8000' : 'https://dursan-chatbot.onrender.com/get_recommendations'
 export default function CarChatApp(): JSX.Element {
   // Estado para los mensajes del chat
   const [messages, setMessages] = useState<Message[]>([
@@ -177,13 +177,13 @@ export default function CarChatApp(): JSX.Element {
   const sendMessagesToApi = ():void=>{
     const userMessages = messages.filter(msg => msg.isUser).map(msg => msg.content)
     const recommendationRequest: RecommendationRequest = {
-      chat_questions: userMessages,
+      chat_questions: AI_QUESTIONS.slice(0, -1),
       user_answers: userMessages
     }
     setIsSearchingRecommendations(true)
     setApiError(null) // Clear any previous errors
     setIs404Error(false) // Clear previous 404 flag
-    fetch("http://localhost:8000/get_recommendations", {
+    fetch(`${API_URL}/get_recommendations`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

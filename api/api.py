@@ -10,13 +10,7 @@ from api.modules.utils import gemini_request
 from api.modules.RecommendationParser import RecommendationParser
 from dotenv import load_dotenv
 
-load_dotenv()
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT")
-DB_NAME = os.getenv("DB_NAME")
-DB_URI=f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+
 
 app = FastAPI()
 origins = [
@@ -33,11 +27,23 @@ app.add_middleware(
 
 
 
-bbdd=BBDD_Connector(DB_URI)
-parser=RecommendationParser()
+
 
 @app.post("/get_recommendations")
+
 async def get_recommendations(chat_questions: List[str], user_answers: List[str]) -> Dict[str, Any]:
+	
+	load_dotenv()
+	DB_USER = os.getenv("DB_USER")
+	DB_PASSWORD = os.getenv("DB_PASSWORD")
+	DB_HOST = os.getenv("DB_HOST")
+	DB_PORT = os.getenv("DB_PORT")
+	DB_NAME = os.getenv("DB_NAME")
+	DB_URI=f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+	
+	bbdd=BBDD_Connector(DB_URI)
+	parser=RecommendationParser()
+	
 	query_flag=0 ##Bool that controls if the query has been properly generated
 	n_sql_tries=0
 	N_AI_TRIES=3
