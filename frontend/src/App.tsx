@@ -54,7 +54,7 @@ const AI_QUESTIONS: string[] = [
   "¡Perfecto! Déjame encontrar las mejores opciones para ti...",
 ]
 const API_ENV = 'SERVER'
-const API_URL = API_ENV === 'LOCAL' ? 'http://localhost:8000' : 'https://dursan-chatbot.onrender.com/get_recommendations'
+const API_URL = API_ENV === 'LOCAL' ? 'http://localhost:8000' : 'https://dursan-chatbot.onrender.com/'
 export default function CarChatApp(): JSX.Element {
   // Estado para los mensajes del chat
   const [messages, setMessages] = useState<Message[]>([
