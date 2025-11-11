@@ -251,7 +251,7 @@ export default function CarChatApp(): JSX.Element {
       <div className="header">
         <div className="header-inner">
           <div className="header-logo">
-            <img src="/images/dursan_logo.jpeg" alt="Dursan Logo" />
+            <img src="images/dursan_logo.jpeg" alt="Dursan Logo" />
           </div>
           <div>
             <div className="header-title">DURSAN AI</div>
