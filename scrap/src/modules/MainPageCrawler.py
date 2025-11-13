@@ -15,22 +15,6 @@ import boto3
 
 load_dotenv()
 main_url=os.getenv('MAIN_URL')
-# Database configuration
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT")
-DB_NAME = os.getenv("DB_NAME")
-
-# AWS_ACCESS_KEY_ID=os.getenv("AWS_ACCESS_KEY_ID")
-# AWS_SECRET_ACCESS_KEY=os.getenv("AWS_SECRET_ACCESS_KEY")
-# AWS_DEFAULT_REGION=os.getenv("AWS_DEFAULT_REGION")
-
-
-s3_bucket_name='dursan-chatbot'
-s3_folder_name='scrap-images'
-DB_URI=f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
-
 
 def clean_text(text:str):
            return text.strip().replace('km','').replace('\n','').replace('.','').replace('\xa0','').replace('€','')
@@ -39,17 +23,31 @@ class MainPageCrawler():
 
     def __init__(self,
                     url: str,
-                    db: str = DB_URI,
-                    s3_client = boto3.client('s3')
+                    db: str = None,
+                    s3_client = boto3.client('s3'),
+                    s3_bucket_name='dursan-chatbot',
+                    s3_folder_name='scrap-images'
                 ):
+        
+        
         self.url = url
-        self.db = db
+        
+        if db is None:
+            DB_USER = os.getenv("DB_USER")
+            DB_PASSWORD = os.getenv("DB_PASSWORD")
+            DB_HOST = os.getenv("DB_HOST")
+            DB_PORT = os.getenv("DB_PORT")
+            DB_NAME = os.getenv("DB_NAME")
+            self.db = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+        else:
+            self.db = db
+            
         self.s3_client = s3_client
         self.s3_bucket_name = s3_bucket_name
         self.s3_folder_name = s3_folder_name
-
     def get_html(self,
-                 url:str=main_url):
+                 url=main_url
+                 ):
         response = requests.get(url)
         if response.status_code == 200:
             return response.content
@@ -72,9 +70,9 @@ class MainPageCrawler():
                      img_tag=car_image.find('img')
                      image_url=img_tag['src'] if img_tag and 'src' in img_tag.attrs else None
                      image_content=requests.get(image_url).content
-                     with open(f'frontend/images/car_images/{image_url.split("/")[-1]}', 'wb') as handler:
+                     with open(f'/tmp/{image_url.split("/")[-1]}', 'wb') as handler:
                         handler.write(image_content)
-                     self.s3_client.upload_file(f'frontend/images/car_images/{image_url.split("/")[-1]}', s3_bucket_name, f'{s3_folder_name}/{image_url.split("/")[-1]}')
+                     self.s3_client.upload_file(f'/tmp/{image_url.split("/")[-1]}', self.s3_bucket_name, f'{self.s3_folder_name}/{image_url.split("/")[-1]}')
                 
                 car_image_url=image_url.split("/")[-1]
                 car_content = ad.find('div', class_='vehicle-card__content')

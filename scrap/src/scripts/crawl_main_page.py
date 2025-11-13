@@ -10,37 +10,41 @@ import glob
 
 load_dotenv()
 main_url = os.getenv("MAIN_URL")
-remove_db()
-create_db()
 
-#Se borran las imágenes de coches que se tenían
-image_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "frontend", "images", "car_images")
-image_files = glob.glob(os.path.join(image_folder, "*"))
-for image_file in image_files:
-    try:
-        os.remove(image_file)
-    except Exception as e:
-        print(f"Error deleting {image_file}: {e}")
+print("AWS ACCESS KEY ID",os.getenv("AWS_ACCESS_KEY_ID"))
 
-crawler=MainPageCrawler(main_url)
-html = crawler.get_html()
-page_url_list=crawler.get_all_urls(html)
+def crawl_main_page():
+    remove_db()
+    create_db()
 
-car_ads_list=[]
-start_time = time.time()
+    #Se borran las imágenes de coches que se tenían
+    image_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "frontend", "images", "car_images")
+    image_files = glob.glob(os.path.join(image_folder, "*"))
+    for image_file in image_files:
+        try:
+            os.remove(image_file)
+        except Exception as e:
+            print(f"Error deleting {image_file}: {e}")
 
-max_pages_to_crawl = 5
+    crawler=MainPageCrawler(main_url)
+    html = crawler.get_html()
+    page_url_list=crawler.get_all_urls(html)
 
-for i,page in enumerate(page_url_list[:max_pages_to_crawl]):
-    try:
-        print(f'Extrayendo página {str(page)}',)
-        html = crawler.get_html(page)
-        car_ads_list.extend(crawler.get_page_ads(html))
+    car_ads_list=[]
+    start_time = time.time()
 
-    except Exception as e:
-        print(f'Error en la página {i+1}:',e)
+    max_pages_to_crawl = 1000
 
-crawler.insert_car_ads(car_ads_list)
+    for i,page in enumerate(page_url_list[:max_pages_to_crawl]):
+        try:
+            print(f'Extrayendo página {str(page)}',)
+            html = crawler.get_html(page)
+            car_ads_list.extend(crawler.get_page_ads(html))
 
-end_time = time.time()
-print(f"Execution time: {end_time - start_time:.2f} seconds")
+        except Exception as e:
+            print(f'Error en la página {i+1}:',e)
+
+    crawler.insert_car_ads(car_ads_list)
+
+    end_time = time.time()
+    print(f"Execution time: {end_time - start_time:.2f} seconds")
