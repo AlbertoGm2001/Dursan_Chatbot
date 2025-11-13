@@ -4,6 +4,8 @@ from sqlmodel import Session, create_engine
 import os
 import requests
 from bs4 import BeautifulSoup
+from selectolax.parser import HTMLParser
+
 from dotenv import load_dotenv
 import sys 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -42,6 +44,9 @@ class MainPageCrawler():
         else:
             self.db = db
             
+        # Create engine once and reuse it for better performance
+        self._engine = create_engine(self.db, echo=False, pool_size=10, max_overflow=20)
+            
         self.s3_client = s3_client
         self.s3_bucket_name = s3_bucket_name
         self.s3_folder_name = s3_folder_name
@@ -55,77 +60,88 @@ class MainPageCrawler():
 
     
 
+    def parse_ad(self,ad):
+        try: 
+            car_image= ad.css_first('div.vehicle-card__slider')
+            if car_image:
+                    img_tag=car_image.css_first('img')
+                    image_url=img_tag.attributes['src'] if img_tag and 'src' in img_tag.attributes else None
+                    image_content=requests.get(image_url).content
+                    with open(f'/tmp/{image_url.split("/")[-1]}', 'wb') as handler:
+                        handler.write(image_content)
+                    self.s3_client.upload_file(f'/tmp/{image_url.split("/")[-1]}', self.s3_bucket_name, f'{self.s3_folder_name}/{image_url.split("/")[-1]}')
+            
+                    car_image_url=image_url.split("/")[-1]
+            else:
+                return None
+
+            car_content = ad.css_first('div.vehicle-card__content')
+            
+            if car_content is None:
+                return None
+            
+            ad_title = car_content.css_first('a.vehicle-card__title')
+            ad_url = ad_title.attributes['href'] if ad_title else None
+
+            ad_brand = ad_title.css_first('span.make').text() if ad_title else None
+            ad_model = ad_title.css_first('span.model').text() if ad_title else None
+
+            car_especifications = ad.css_first('div.vehicle-card-specs')
+            car_especifications = car_especifications.css('li')
+            ad_kms = int(clean_text(car_especifications[0].text())) if len(car_especifications) > 0 else None
+            ad_year = int(car_especifications[1].text().strip()) if len(car_especifications) > 1 else None
+            ad_automatic = True if len(car_especifications) > 2 and 'Automático' in car_especifications[2].text().strip() else False
+            ad_fuel_type = car_especifications[3].text().strip() if len(car_especifications) > 3 else None
+
+            car_prices=ad.css_first('div.vehicle-card__price')
+            ad_offer_price=int(clean_text(car_prices.css_first('span.inner').text()))
+            
+            car_quota=ad.css_first('div.vehicle-card__quota')
+            ad_monthly_price=int(clean_text(car_quota.css_first('span.value').text()))
+            ad_description=ad_title.text().strip().replace(' ','').replace('\n',' ') if ad_title else None
+            car_ad = CarAd(
+            url=ad_url,
+            car_brand=ad_brand,
+            car_model=ad_model,
+            description=ad_description,
+            offer_price=ad_offer_price,  # You need to extract this from the ad if available
+            monthly_offer_price=ad_monthly_price,  # You need to extract this from the ad if available
+            car_year=ad_year,
+            car_kms=ad_kms,
+            automatic=ad_automatic,
+            fuel_type=ad_fuel_type,
+            image_url=car_image_url
+            )
+
+        except Exception as e:
+            print(f"Error processing ad: {e}")
+            return 
+        return car_ad
+
     def get_page_ads(self,html):
         
-        soup=BeautifulSoup(html, 'html.parser')
+        tree=HTMLParser(html)
 
-        ads_list=soup.find_all('div', class_='vehicle-card')
-        car_ads_list=[]
+        ads_list=tree.css('div.vehicle-card')
 
-        for ad in ads_list:
-            
-            try: 
-                car_image= ad.find('div', class_='vehicle-card__slider')
-                if car_image:
-                     img_tag=car_image.find('img')
-                     image_url=img_tag['src'] if img_tag and 'src' in img_tag.attrs else None
-                     image_content=requests.get(image_url).content
-                     with open(f'/tmp/{image_url.split("/")[-1]}', 'wb') as handler:
-                        handler.write(image_content)
-                     self.s3_client.upload_file(f'/tmp/{image_url.split("/")[-1]}', self.s3_bucket_name, f'{self.s3_folder_name}/{image_url.split("/")[-1]}')
-                
-                car_image_url=image_url.split("/")[-1]
-                car_content = ad.find('div', class_='vehicle-card__content')
-                
-                if car_content is None:
-                    continue
-                ad_title = car_content.find('a', class_='vehicle-card__title')
-                ad_url = ad_title['href'] if ad_title else None
-
-                ad_brand = ad_title.find('span', class_='make').text if ad_title else None
-                ad_model = ad_title.find('span', class_='model').text if ad_title else None
-
-                car_especifications = ad.find('div', class_='vehicle-card-specs')
-                car_especifications = car_especifications.find_all('li')
-                ad_kms = int(clean_text(car_especifications[0].text)) if len(car_especifications) > 0 else None
-                ad_year = int(car_especifications[1].text.strip()) if len(car_especifications) > 1 else None
-                ad_automatic = True if len(car_especifications) > 2 and 'Automático' in car_especifications[2].text.strip() else False
-                ad_fuel_type = car_especifications[3].text.strip() if len(car_especifications) > 3 else None
-
-                car_prices=ad.find('div', class_='vehicle-card__price')
-                ad_offer_price=int(clean_text(car_prices.find('span',class_='inner').text))
-                
-                car_quota=ad.find('div', class_='vehicle-card__quota')
-                ad_monthly_price=int(clean_text(car_quota.find('span',class_='value').text))
-
-                car_ad = CarAd(
-                url=ad_url,
-                car_brand=ad_brand,
-                car_model=ad_model,
-                description=ad_title.text if ad_title else None,
-                offer_price=ad_offer_price,  # You need to extract this from the ad if available
-                monthly_offer_price=ad_monthly_price,  # You need to extract this from the ad if available
-                car_year=ad_year,
-                car_kms=ad_kms,
-                automatic=ad_automatic,
-                fuel_type=ad_fuel_type,
-                image_url=car_image_url
-                )
-
-                car_ads_list.append(car_ad)
-            except Exception as e:
-                print(f"Error processing ad: {e}")
-                continue
+        car_ads_list = [self.parse_ad(ad) for ad in ads_list]    
+        
+        car_ads_list = [car_ad for car_ad in car_ads_list if car_ad is not None]
 
         return car_ads_list
 
 
-    def insert_car_ads(self,car_ads_list):
-        
-        engine = create_engine(self.db, echo=True)
-        with Session(engine) as session:
+    def insert_car_ads(self, car_ads_list):
+        """
+        Insert car ads using bulk operations for better performance.
+        Uses the reusable engine instance with connection pooling.
+        """
+        if not car_ads_list:
+            return
             
-            session.add_all(car_ads_list)
+        with Session(self._engine) as session:
+            # Use bulk_save_objects for better performance with large datasets
+            session.bulk_save_objects(car_ads_list)
             session.commit()
 
     def get_all_urls(self,html):

@@ -1,6 +1,7 @@
 
 from sqlmodel import SQLModel, Field
 from typing import Optional
+
 from sqlmodel import create_engine
 from dotenv import load_dotenv
 import os

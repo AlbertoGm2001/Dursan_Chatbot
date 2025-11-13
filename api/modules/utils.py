@@ -10,3 +10,8 @@ def gemini_request(text):
     contents=text
     )
     return response.text.strip()
+
+
+if __name__=="__main__":
+    test_prompt="Write a short poem about the sea."
+    print(gemini_request(test_prompt))

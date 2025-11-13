@@ -11,6 +11,7 @@ sqlmodel>=0.0.24
 # Web scraping
 beautifulsoup4==4.13.4
 requests==2.32.4
+selectolax>=0.3.21
 soupsieve==2.7
 
 # AWS services
