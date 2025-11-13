@@ -95,6 +95,8 @@ async def get_recommendations(chat_questions: List[str], user_answers: List[str]
 				}}
 				for recommendation in parsed_recommendations
 			]
+			if not recommendations or len(recommendations)==0:
+				raise HTTPException(status_code=500, detail="No recommendations generated")
 			recommendation_flag=1
 		except Exception as e:
 			logger.error(f"Error generating recommendations: {str(e)}")
