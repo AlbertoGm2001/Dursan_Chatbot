@@ -38,6 +38,8 @@ If the user gives a hint that prefers any of the brands in the list, then you wi
 For example, if the user says they like BMW, you can include in the filter Audi and Mercedes as well.
 
 You will mainly need to filter by the variables offer_price or monthly offer price(depending on what the user asks for), car_year, car_kms, automatic and fuel_type, so you can ignore the rest of the variables.
+Also never filter by a minimum price, only filter when the user is specifying a maximum price. If the user answers the price question specifying that he does not mind paying over a certain amount, then simply do not filter by price
+
 
 OBSERVATIONS:
 
