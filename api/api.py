@@ -9,7 +9,7 @@ from api.prompts import sql_translator_prompt, offer_optimizer_prompt
 from api.modules.utils import gemini_request
 from api.modules.RecommendationParser import RecommendationParser
 from dotenv import load_dotenv
-
+import time
 
 
 app = FastAPI()

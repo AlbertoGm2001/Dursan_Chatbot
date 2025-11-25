@@ -53,7 +53,7 @@ const AI_QUESTIONS: string[] = [
   "Para finalizar, ¿Hay alguna característica específica que sea importante para ti?",
   "¡Perfecto! Déjame encontrar las mejores opciones para ti...",
 ]
-const API_ENV = 'SERVER'
+const API_ENV = 'LOCAL'
 const API_URL = API_ENV === 'LOCAL' ? 'http://localhost:8000' : 'https://dursan-chatbot.onrender.com'
 export default function CarChatApp(): JSX.Element {
   // Estado para los mensajes del chat
