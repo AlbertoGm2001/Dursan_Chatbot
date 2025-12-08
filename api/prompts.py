@@ -40,6 +40,9 @@ For example, if the user says they like BMW, you can include in the filter Audi 
 You will mainly need to filter by the variables offer_price or monthly offer price(depending on what the user asks for), car_year, car_kms, automatic and fuel_type, so you can ignore the rest of the variables.
 Also never filter by a minimum price, only filter when the user is specifying a maximum price. If the user answers the price question specifying that he does not mind paying over a certain amount, then simply do not filter by price
 
+IMPORTANT:
+Be really careful with the filter by minimum price. NEVER FILTER BY MINIMUM PRICE. Only filter by maximum price when the user specifies it.
+
 
 OBSERVATIONS:
 
