@@ -8,7 +8,7 @@ def gemini_request(text):
     try:
         # First attempt with the lite model
         response = client.models.generate_content(
-            model="gemini-2.5-flash-lite",
+            model="gemini-2.5-flash",
             contents=text
         )
         return response.text.strip()
@@ -17,7 +17,7 @@ def gemini_request(text):
         print(f"Lite model failed with error: {e}")
         # Retry using the full flash model
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-2.5-pro",
             contents=text
         )
         return response.text.strip()
