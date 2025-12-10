@@ -301,6 +301,9 @@ export default function CarChatApp(): JSX.Element {
             <p className="searching-recommendations-text">
               Analizando tus preferencias para encontrar los coches perfectos para ti...
             </p>
+            <div className="estimated-time">
+              ⏱️ Tiempo estimado: ~1 minuto
+            </div>
           </div>
         )}
         {showRecommendations && !isSearchingRecommendations && apiError && (
